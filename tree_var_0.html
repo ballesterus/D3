@@ -1,0 +1,212 @@
+<!--  D3 collapsible tree in version 5
+      MIT licence
+      The code is  based on  d3noob's  Collapsible tree diagram in v4
+      https://gist.github.com/d3noob/43a860bc0024792f8803bba8ca0d5ecd
+  -->
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <style>
+      .node{
+	  cursor: pointer;
+      }
+      .node circle{
+	  fill: #ea5e51;
+	  stroke: steelblue;
+	  strocke-width: 3px
+      }
+      .node text{
+	  font: 12px sans-serif;
+      }
+      .link{
+	  fill: none;
+	  stroke: #35838d;
+	 
+      }
+    </style>
+    
+  </head>
+  <body>
+    <script src="https://d3js.org/d3.v5.js"></script>
+    <script>
+
+      
+      // Tree diagram
+      var margin ={top:20, left:120, right:120, bottom:20},
+	  w = 2480 - margin.left - margin.right,
+	  h = 3508 - margin.top - margin. bottom,
+	  max_lw= 20;
+      
+      var svg = d3.select("body").append("svg")
+	  .attr("width", w + margin.right + margin.left)
+	  .attr("height", h + margin.top + margin.bottom)
+	  .append("g")
+	  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+      var i = 0,
+	  duration = 750,
+	  root;
+      
+      var treeload = d3.tree().size([h,w]);
+
+      d3.json("example.json").then(function(treeData) { 
+	  
+	  root = d3.hierarchy(treeData, function (d){ return d.children})
+	  root.y0=h/2
+	  root.x0=50
+	  max_leaves=root.leaves().length
+
+	  function collapse(d){
+	      if (d.children){
+		  d._children = d.children;
+		  d._children.forEach(collapse);
+		  d.children=null;
+	      }
+	  };
+	  
+//	  root.children.forEach(collapse);
+	  
+	  update(root);
+	  
+	  function update(source){
+	      //Assigns x and y positions for the nodes0
+	      var treeData = treeload(root)
+
+	      //create a new tree layout
+	      var nodes = treeData.descendants(),
+		  links = treeData.descendants().slice(1);
+	      
+	      //Normalize node depth, by default its is zero for the root node and increases by 1 for each descendant generation
+	      nodes.forEach(function(d){ d.y = d.depth * 250 });
+	      
+	      //******NODES******
+	      
+	      //Update nodes
+	      var node = svg.selectAll('g.node')
+		  .data(nodes, function(d){return d.id || (d.id = ++i);});
+
+	      //Enter new nodes
+	      var nodeEnter = node.enter().append('g')
+		  .attr("class", "node")
+		  .attr("transform", function(d){
+		      return "translate(" + source.y0 + "," + source.x0 + ")";})
+		  .on("click", click);
+
+	      //Add node shape color the node different if it contains children or not
+	      nodeEnter.append("circle")
+		  .attr("class", "node")
+		  .attr("r", 1e-6)
+		  .style("fill", function (d){
+		      return  d._children ? "#94c8d8" : "#ea5e51";});
+
+	      //Add node labels, text of internal nodes is shown to the left of the circle and to thw right for terminal nodes
+	      nodeEnter.append("text")
+		  .attr("dy", ".35em")
+		  .attr("x", function(d){
+		      return d.children || d._children ? -5 : 5})
+		  .attr("text-anchor", function(d){
+		      return d.children || d._children ? "end" : "start"})
+		  .text(function (d){return d.data.name;})
+
+	      //Update nodes
+	      var nodeUpdate = nodeEnter.merge(node);
+
+	      //Transition to the node position
+	      nodeUpdate.transition()
+		  .duration(duration)
+		  .attr("transform", function(d){
+		      return "translate(" + d.y + "," + d.x + ")";
+		  });
+
+	      //Update node attributes and style
+	      nodeUpdate.select("circle.node")
+		  .attr('r', 5)
+		  .style("fill", function(d){
+		      return d._children ? "#94c8d8" : "#ea5e51"})
+		  .attr("cursor", "pointer");
+
+	      //Remove any collapsed nodes
+	      var nodeExit = node.exit().transition()
+		  .duration(duration)
+		  .attr("transform", function(d){
+		      return "translate(" + source.y + "," + source.x + ")";
+		  })
+		  .remove();
+	      
+	      nodeExit.select("circle")
+		  .attr("r", 1e-6)
+	      
+	      
+	      nodeExit.select("text")
+		  .style("fill-opacity", 1e-6)
+
+	      //********LINKS********
+	      
+	      //Update links
+	      var link = svg.selectAll("path.link")
+		  .data(links, function(d){return d.id;});
+
+	      var linkEnter = link.enter().insert("path", "g")
+		  .attr("class", "link")
+		  .attr("stroke-width",
+			function(d){return  max_lw - d.depth > 1 ? max_lw - d.depth + "px" : "1px"  })
+	      
+		  .attr("d", function(d){
+		      var origin = {x: source.x0, y: source.y0};
+		      return edges(origin, origin);
+		  });
+
+	      //UPDATE
+	      var linkUpdate = linkEnter.merge(link);
+
+	      //Transition to the parent position
+	      linkUpdate.transition()
+		  .duration(duration)
+		  .attr("d", function(d){
+		      return edges(d, d.parent)
+		  });
+
+	      //Remove exiting links
+	      var linkExit = link.exit().transition()
+		  .duration(duration)
+		  .attr('d', function(d){
+		      var origin = {x: source.x, y: source.y};
+		      return edges(origin, origin);
+		  })
+		  .remove();
+
+	      //Store the old position for the transition
+	      nodes.forEach(function(d){
+		  d.x0 = d.x;
+		  d.y0 = d.y;
+	      });
+
+	      //Curve diagonal path from parent to child nodes
+
+	      function edges(o,t){
+		  path = `M ${o.y} ${o.x}
+	              C ${(o.y + t.y)/2} ${o.x},
+                        ${(o.y + t.y)/2} ${t.x},
+                        ${t.y} ${t.x}`
+		  
+		  return path
+	      };
+
+	      //Toggle children on click
+	      function click (d){
+		  if (d.children){
+		      d._children = d.children;
+		      d.children = null;
+		  } else{
+		      d.children = d._children;
+		      d._children = null;
+		  }
+		  update(d);
+	      }}})
+      ;
+    </script>
+  </body>
+</html>
+

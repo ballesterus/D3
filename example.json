@@ -1,0 +1,70 @@
+
+    {
+	"name": "Arthropoda",
+	"parent": "null",
+	"branchlength": 1,
+	"support": null,
+	"children": [
+	    {
+		"name":"Mandibulata",
+		"parent":"Arthropoda",
+		"branchlength": 5,
+		"children":[
+		    {
+			"name": "Myriapoda",
+			"parent":"Mandibulata",
+			"branchlength": 10
+			
+		    },
+		    {
+			"name":"Pancrustacea",
+			"parent":"Mandibulata",
+			"branchlength": 10
+		    }
+		    
+		]
+	    },
+	    {
+		"name":"Chelicerata",
+		"branchlength": 20,
+		"parent":"Arthropoda",
+		"children":[
+		    {
+			"name":"Pycnogonida",
+			"branchlength": 25,
+			"parent": "Chelicerata"
+			
+		    },
+		    {
+			"name": "Arachnida",
+			"parent": "Chelicerata",
+			"branchlength": 27,
+			"children":[
+			    {
+				"name":"Acari",
+				"branchlength": 27,
+				"parent": "Arachnida"
+			    },
+			    {
+				"name":"Opiliones",
+				"branchlength": 27,
+				"parent": "Arachnida"
+			    },
+			    {
+				"name":"Xiphosura",
+				"branchlength": 28,
+				"parent": "Arachnida"
+			    },
+			    {
+				"name":"Arachnopulmonata",
+				"branchlength": 28,
+				"parent": "Arachnida"
+			    }
+			]
+		    }]
+		
+	    }
+	    
+	]
+    }
+
