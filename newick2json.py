@@ -5,28 +5,12 @@ import argparse
 import UPhO
 
 
-outg=""
-ing=""
-
-class node:
-    """Class related to UPhO.split but a single partition, listing the descencedants of that node difines it"""
-    def __init__(self):
-        self.children=None
-        self.branch_length=None
-        self.support=None
-        self.name=None
-        self.parent=None
-        self.level=None
-        self.size=None
-        self.droot=0
-
-
-
 def main():
     usage = u"""
  \t\t\u26F1 \u001b[31;1m newick2json.py \u001b[0m \u26F1
 \n 
-    Convert your newick file in hierafchichal json format.\nThis script is written for python3 and requires the corresponding UPhO (https://github.com/ballesterus/UPhO)for split decoposition.
+    Convert your newick file in hierafchichal json format.
+    This script is written for python3 and requires the corresponding version of UPhO (https://github.com/ballesterus/UPhO) for split decoposition.
     
     newick2json.py <NEWICKTREE> <OUTGROUP,TAXA,SEPARATED,WITH,COMMAS>
     """
@@ -36,7 +20,7 @@ def main():
     Fc=F.readline()
     T = UPhO.myPhylo(Fc)
     F.close()
-    print("File was read")
+    print("\u001b[32m Tree file was read: OK")
     global outg
     global ing
     myoutg=argv[2].split(",")
@@ -52,12 +36,31 @@ def main():
         
     with open(Oname, "w") as out:
         out.write(build_json(L,R))
-    print("Enjoy editing you json. Bye bye")
+    print("\u001b[32m Enjoy editing you json. Bye bye \u001b[0m")
     
 
-    
+#Global variables
+outg=""
+ing=""
+
+#class definition for nodes
+class node:
+    """Class related to UPhO.split but a single partition, listing the descencedants of that node difines it"""
+    def __init__(self):
+        self.children=None
+        self.branch_length=None
+        self.support=None
+        self.name=None
+        self.parent=None
+        self.level=None
+        self.size=None
+        self.droot=0
+
+
+#FUNCTION DEFIBITIONS
     
 def belongs_to_og(split_vec):
+    """verifies if a list of OTU are a subset of the outgroup"""
     s = set(split_vec)
     if outg.issuperset(s) and not ing.issuperset(s):
         return True
@@ -65,6 +68,7 @@ def belongs_to_og(split_vec):
         return False
 
 def belongs_to_in(split_vec):
+    """verifies if a list of OTU are a subset of the ingroup"""
     s = set(split_vec)
     if ing.issuperset(s) and not outg.issuperset(s):
         return True
@@ -133,7 +137,7 @@ def clados(phylo):
                 
                 
 def find_mommy(nodeName, nodes_dict):
-    """Updates the parent node in a collection of nodes(dictionary)"""
+    """Updates the parent for  node based on the information from a collection of nodes(dictionary)"""
     q=nodes_dict[nodeName]
     qc=set(q.children)
     parent="root"
@@ -148,7 +152,7 @@ def find_mommy(nodeName, nodes_dict):
     q.parent=parent
 
 def find_children(nodeName,node_dict):
-    """To run after all parents have been identified"""
+    """List the direct childre of a node. To run after all parents have been identified"""
     result=[]
     asize=node_dict['root'].size
     for k in node_dict.keys():
@@ -161,13 +165,14 @@ def find_children(nodeName,node_dict):
     return result
 
 def update_parents(nodes_dict):
+    """Populates the parents for the nodes in the node dictionary"""
     for k in nodes_dict:
         if nodes_dict[k].name != "root":
             find_mommy(k,nodes_dict)
             
             
 def ladderize(nodes_dict):
-    """Updates levels and Return and list of node keys ordered descendingly"""
+    """Updates levels and returns and list of node keys ordered descendingly"""
     ladder=["root"]
     queue=[]
     init=find_children('root', nodes_dict)
@@ -186,6 +191,7 @@ def ladderize(nodes_dict):
             
 
 def json_node(node_name, nodes_dict):
+    """returns a json formatted string  of a node"""
     jstring=""
     node= nodes_dict[node_name]
     desc=find_children(node_name, nodes_dict)

@@ -25,7 +25,6 @@
 	 
       }
     </style>
-    
   </head>
   <body>
     <script src="https://d3js.org/d3.v5.js"></script>
@@ -50,8 +49,8 @@
 	  root;
       
       var treeload = d3.tree().size([h,w]);
-
-      d3.json("example.json").then(function(treeData) { 
+      
+      d3.json("example2.json").then(function(treeData) { 
 	  
 	  root = d3.hierarchy(treeData, function (d){ return d.children})
 	  root.y0=h/2
@@ -79,7 +78,7 @@
 		  links = treeData.descendants().slice(1);
 	      
 	      //Normalize node depth, by default its is zero for the root node and increases by 1 for each descendant generation
-	      nodes.forEach(function(d){ d.y = d.depth * 250 });
+	      nodes.forEach(function(d){ d.y = d.depth * 50 });
 	      
 	      //******NODES******
 	      
@@ -122,7 +121,7 @@
 
 	      //Update node attributes and style
 	      nodeUpdate.select("circle.node")
-		  .attr('r', 5)
+		  .attr("r", 3)
 		  .style("fill", function(d){
 		      return d._children ? "#94c8d8" : "#ea5e51"})
 		  .attr("cursor", "pointer");
@@ -151,7 +150,7 @@
 	      var linkEnter = link.enter().insert("path", "g")
 		  .attr("class", "link")
 		  .attr("stroke-width",
-			function(d){return  max_lw - d.depth > 1 ? max_lw - d.depth + "px" : "1px"  })
+			function(d){return  Math.log(d.descendants().length) > 10 ? "10px" : Math.log(d.descendants().length) + "1px"  })
 	      
 		  .attr("d", function(d){
 		      var origin = {x: source.x0, y: source.y0};
